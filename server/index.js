@@ -9,11 +9,26 @@ const server = http.createServer(app);
 
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-const io = new Server(server, {
-  cors: { origin: CLIENT_URL, methods: ['GET', 'POST'] },
-});
+const allowedOrigins = [
+  CLIENT_URL,
+  'https://p2p-webshare-chi.vercel.app',
+  'http://localhost:5173',
+];
 
-app.use(cors({ origin: CLIENT_URL }));
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST'],
+};
+
+const io = new Server(server, { cors: corsOptions });
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -34,7 +49,7 @@ io.on('connection', (socket) => {
   socket.on('join-room', (roomId, callback) => {
     const room = rooms[roomId];
     if (!room) return callback({ error: 'Room not found' });
-    if (room.receiver && room.reciever !== socket.id) {
+    if (room.receiver && room.receiver !== socket.id) {
       return callback({ error: 'Room is full' });
     }
     room.receiver = socket.id;
