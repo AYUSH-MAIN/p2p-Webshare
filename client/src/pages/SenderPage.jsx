@@ -74,25 +74,26 @@ export default function SenderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen glow-bg text-white flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-6">
 
-        <div className="text-center animate-fade-in-up">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-500/10 mb-3 text-3xl">
-            🔗
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
-            P2P WebShare
-          </h1>
-          <p className="text-gray-400 mt-2 text-sm">
-            Send files directly, browser-to-browser. No uploads, no storage, nothing kept.
-          </p>
+      <div className="text-center animate-fade-in-up">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs font-semibold tracking-wide text-violet-300 mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+          DIRECT · ENCRYPTED · SERVERLESS
         </div>
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+          P2P WebShare
+        </h1>
+        <p className="text-gray-400 mt-3 text-sm">
+          Send files directly, browser-to-browser. Nothing is uploaded or stored.
+        </p>
+      </div>
 
         <DropZone onFile={handleFile} onError={(msg) => showToast(msg, 'error')} disabled={phase !== 'idle'} />
 
         {file && (
-          <div className="bg-gray-900 rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
+          <div className="glass-card rounded-xl p-4 flex items-center gap-3 animate-fade-in-up">
             <span className="text-2xl">{getFileIcon(file.name)}</span>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{file.name}</p>

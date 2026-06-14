@@ -75,20 +75,21 @@ export default function ReceiverPage({ roomId }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen glow-bg text-white flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-6">
 
-        <div className="text-center animate-fade-in-up">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-cyan-500/10 mb-3 text-3xl">
-            📥
-          </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
-            P2P WebShare
-          </h1>
-          <p className="text-gray-400 mt-2 text-sm">Receiving a file directly from the sender's browser.</p>
+      <div className="text-center animate-fade-in-up">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs font-semibold tracking-wide text-cyan-300 mb-4">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          DIRECT · ENCRYPTED · SERVERLESS
         </div>
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
+          P2P WebShare
+        </h1>
+        <p className="text-gray-400 mt-3 text-sm">Receiving a file directly from the sender's browser.</p>
+      </div>
 
-        <div className="bg-gray-900 rounded-xl p-5 space-y-4 animate-fade-in-up">
+        <div className="glass-card rounded-xl p-5 space-y-4 animate-fade-in-up">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-200">{PHASE_LABEL[phase]}</p>
             <StatusBadge phase={phase} />

@@ -138,3 +138,54 @@ code {
   border-inline: none;
   text-align: left;
 }
+
+.glow-bg {
+  background-color: #0a0a0f;
+  position: relative;
+  overflow: hidden;
+}
+.glow-bg::before,
+.glow-bg::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  z-index: 0;
+  pointer-events: none;
+}
+.glow-bg::before {
+  width: 420px;
+  height: 420px;
+  background: #7c3aed;
+  top: -120px;
+  left: -100px;
+  animation: drift1 18s ease-in-out infinite alternate;
+}
+.glow-bg::after {
+  width: 380px;
+  height: 380px;
+  background: #06b6d4;
+  bottom: -100px;
+  right: -100px;
+  animation: drift2 22s ease-in-out infinite alternate;
+}
+@keyframes drift1 {
+  from { transform: translate(0, 0); }
+  to { transform: translate(60px, 80px); }
+}
+@keyframes drift2 {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-50px, -70px); }
+}
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 1;
+}
+.glow-bg > * {
+  position: relative;
+  z-index: 1;
+}
