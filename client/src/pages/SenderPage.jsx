@@ -50,14 +50,21 @@ export default function SenderPage() {
           pc.onicecandidate = ({ candidate }) => {
             if (candidate) socket.emit('signal', { roomId: id, data: { type: 'candidate', candidate } })
           }
-          await sendFile(pc, f, (pct, spd) => { setProgress(pct); setSpeed(spd) }, () => {
+
+          // 1. Start sendFile WITHOUT awaiting — it sets up the DataChannel
+          //    and will resolve once the transfer finishes
+          const transferPromise = sendFile(pc, f, (pct, spd) => { setProgress(pct); setSpeed(spd) }, () => {
             setPhase('done')
             showToast('Transfer complete!', 'success')
           })
+
+          // 2. Create and send the offer IMMEDIATELY so the connection can be established
           const offer = await pc.createOffer()
           await pc.setLocalDescription(offer)
           socket.emit('signal', { roomId: id, data: { type: 'offer', sdp: pc.localDescription } })
-        })
+
+          // 3. Now wait for the transfer to finish
+          await transferPromise
 
         socket.on('signal', async ({ data }) => {
           const pc = pcRef.current; if (!pc) return
