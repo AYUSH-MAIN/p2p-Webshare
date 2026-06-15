@@ -37,39 +37,42 @@ export default function SenderPage() {
           const pc = createPC()
           pcRef.current = pc
 
-          pc.onconnectionstatechange = () => {
-            console.log("SENDER:", pc.connectionState)
-          }
-
-          pc.oniceconnectionstatechange = () => {
-            console.log("SENDER ICE:", pc.iceConnectionState)
-          }
-
-
+          pc.onconnectionstatechange = () => console.log("SENDER:", pc.connectionState)
+          pc.oniceconnectionstatechange = () => console.log("SENDER ICE:", pc.iceConnectionState)
 
           pc.onicecandidate = ({ candidate }) => {
             if (candidate) socket.emit('signal', { roomId: id, data: { type: 'candidate', candidate } })
           }
 
-          // 1. Start sendFile WITHOUT awaiting — it sets up the DataChannel
-          //    and will resolve once the transfer finishes
-          const transferPromise = sendFile(pc, f, (pct, spd) => { setProgress(pct); setSpeed(spd) }, () => {
+          // ✅ Set up data channel first (non-awaited), then create offer
+          sendFile(pc, f, (pct, spd) => { setProgress(pct); setSpeed(spd) }, () => {
             setPhase('done')
             showToast('Transfer complete!', 'success')
           })
 
-          // 2. Create and send the offer IMMEDIATELY so the connection can be established
           const offer = await pc.createOffer()
           await pc.setLocalDescription(offer)
           socket.emit('signal', { roomId: id, data: { type: 'offer', sdp: pc.localDescription } })
-
-          // 3. Now wait for the transfer to finish
-          await transferPromise
+        })
 
         socket.on('signal', async ({ data }) => {
-          const pc = pcRef.current; if (!pc) return
-          if (data.type === 'answer') await pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
-          else if (data.type === 'candidate') await pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+          const pc = pcRef.current
+          if (!pc) return
+          if (data.type === 'answer') {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
+            // flush any queued ICE candidates
+            for (const c of pc._pendingCandidates || []) {
+              await pc.addIceCandidate(new RTCIceCandidate(c))
+            }
+            pc._pendingCandidates = []
+          } else if (data.type === 'candidate') {
+            if (pc.remoteDescription) {
+              await pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+            } else {
+              pc._pendingCandidates = pc._pendingCandidates || []
+              pc._pendingCandidates.push(data.candidate)
+            }
+          }
         })
 
         socket.on('peer-left', () => {
@@ -95,18 +98,18 @@ export default function SenderPage() {
     <div className="min-h-screen glow-bg text-white flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-lg space-y-6">
 
-      <div className="text-center animate-fade-in-up">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs font-semibold tracking-wide text-violet-300 mb-4">
-          <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-          DIRECT · ENCRYPTED · SERVERLESS
+        <div className="text-center animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-card text-xs font-semibold tracking-wide text-violet-300 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+            DIRECT · ENCRYPTED · SERVERLESS
+          </div>
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+            P2P WebShare
+          </h1>
+          <p className="text-gray-400 mt-3 text-sm">
+            Send files directly, browser-to-browser. Nothing is uploaded or stored.
+          </p>
         </div>
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
-          P2P WebShare
-        </h1>
-        <p className="text-gray-400 mt-3 text-sm">
-          Send files directly, browser-to-browser. Nothing is uploaded or stored.
-        </p>
-      </div>
 
         <DropZone onFile={handleFile} onError={(msg) => showToast(msg, 'error')} disabled={phase !== 'idle'} />
 
