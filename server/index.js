@@ -80,3 +80,11 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => console.log('Server running on :' + PORT));
+
+// Keep-alive: ping self every 14 minutes to prevent Render free tier sleep
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`
+setInterval(() => {
+  fetch(`${SELF_URL}/health`)
+    .then(() => console.log('[Keep-alive] ping ok'))
+    .catch(err => console.log('[Keep-alive] ping failed:', err.message))
+}, 14 * 60 * 1000)
