@@ -29,40 +29,42 @@ export function createPC() {
   return new RTCPeerConnection(ICE)
 }
 
-export async function sendFile(pc, file, onProgress, onDone) {
-  const buf = await file.arrayBuffer()
-  const hash = await sha256(buf)
+export function sendFile(pc, file, onProgress, onDone) {
+  return new Promise(async (resolve) => {
+    const buf = await file.arrayBuffer()
+    const hash = await sha256(buf)
 
-  const dc = pc.createDataChannel('ft', { ordered: true })
+    const dc = pc.createDataChannel('ft', { ordered: true })
 
-  dc.onopen = () => {
-    console.log('[DC] open')
-    dc.send(JSON.stringify({ type: 'meta', name: file.name, size: file.size, mime: file.type, hash }))
-    let offset = 0, lastT = Date.now(), lastOff = 0
+    dc.onopen = () => {
+      console.log('[DC] open')
+      dc.send(JSON.stringify({ type: 'meta', name: file.name, size: file.size, mime: file.type, hash }))
+      let offset = 0, lastT = Date.now(), lastOff = 0
 
-    function next() {
-      if (dc.readyState !== 'open') return
-      if (dc.bufferedAmount > BUFFER_THRESHOLD) { setTimeout(next, 30); return }
-      if (offset >= buf.byteLength) { dc.send(JSON.stringify({ type: 'done' })); onDone(); return }
-      const chunk = buf.slice(offset, offset + CHUNK_SIZE)
-      dc.send(chunk)
-      offset += chunk.byteLength
-      const now = Date.now(), elapsed = (now - lastT) / 1000
-      if (elapsed >= 0.5) {
-        onProgress(Math.round(offset / buf.byteLength * 100), ((offset - lastOff) / elapsed / 1024 / 1024).toFixed(2))
-        lastT = now; lastOff = offset
+      function next() {
+        if (dc.readyState !== 'open') return
+        if (dc.bufferedAmount > BUFFER_THRESHOLD) { setTimeout(next, 30); return }
+        if (offset >= buf.byteLength) {
+          dc.send(JSON.stringify({ type: 'done' }))
+          onDone()
+          resolve()
+          return
+        }
+        const chunk = buf.slice(offset, offset + CHUNK_SIZE)
+        dc.send(chunk)
+        offset += chunk.byteLength
+        const now = Date.now(), elapsed = (now - lastT) / 1000
+        if (elapsed >= 0.5) {
+          onProgress(Math.round(offset / buf.byteLength * 100), ((offset - lastOff) / elapsed / 1024 / 1024).toFixed(2))
+          lastT = now; lastOff = offset
+        }
+        setTimeout(next, 0)
       }
-      setTimeout(next, 0)
+      next()
     }
-    next()
-  }
-  dc.onerror = e => {
-    console.error("[DC ERROR]", e)
-  }
-
-  dc.onclose = () => {
-    console.log("[DC CLOSED]")
-  }
+    dc.onerror = e => { console.error("[DC ERROR]", e); resolve() }
+    dc.onclose = () => { console.log("[DC CLOSED]"); resolve() }
+  })
 }
 
 export function receiveFile(pc, onProgress, onDone) {
