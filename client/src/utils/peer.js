@@ -56,7 +56,13 @@ export async function sendFile(pc, file, onProgress, onDone) {
     }
     next()
   }
-  dc.onerror = e => console.error('[DC sender]', e)
+  dc.onerror = e => {
+    console.error("[DC ERROR]", e)
+  }
+
+  dc.onclose = () => {
+    console.log("[DC CLOSED]")
+  }
 }
 
 export function receiveFile(pc, onProgress, onDone) {

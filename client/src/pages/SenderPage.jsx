@@ -36,6 +36,17 @@ export default function SenderPage() {
           showToast('Receiver connected — sending file...', 'info')
           const pc = createPC()
           pcRef.current = pc
+
+          pc.onconnectionstatechange = () => {
+            console.log("SENDER:", pc.connectionState)
+          }
+
+          pc.oniceconnectionstatechange = () => {
+            console.log("SENDER ICE:", pc.iceConnectionState)
+          }
+
+
+
           pc.onicecandidate = ({ candidate }) => {
             if (candidate) socket.emit('signal', { roomId: id, data: { type: 'candidate', candidate } })
           }

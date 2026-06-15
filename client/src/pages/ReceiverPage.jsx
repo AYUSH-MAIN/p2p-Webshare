@@ -31,6 +31,15 @@ export default function ReceiverPage({ roomId }) {
         setPhase('waiting')
 
         const pc = createPC(); pcRef.current = pc
+
+        pc.onconnectionstatechange = () => {
+          console.log("RECEIVER:", pc.connectionState)
+        }
+
+        pc.oniceconnectionstatechange = () => {
+          console.log("RECEIVER ICE:", pc.iceConnectionState)
+        }
+
         pc.onicecandidate = ({ candidate }) => {
           if (candidate) socket.emit('signal', { roomId, data: { type: 'candidate', candidate } })
         }
